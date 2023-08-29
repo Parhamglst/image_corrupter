@@ -1,3 +1,6 @@
-robustness-master
-sub-imagenet-200
+robustness-master/
+sub-imagenet-200/
 sub-imagenet-200.tar.gz
+best_model_res50_clean.pt
+imagenet_corrupted/
+__pycache__/
