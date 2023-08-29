@@ -1,5 +1,4 @@
 from imagenet_c import corrupt
-import cv2
 import image_utils
 
 
