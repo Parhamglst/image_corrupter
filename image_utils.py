@@ -26,7 +26,7 @@ corruptions = {
     "saturate",
 }
 
-def _corrupt_image(image, corruption_name, severity, output_path):
+def _corrupt_image(image, corruption_name, output_path):
     """private function to corrupt an image and save it to a folder
 
     Args:
@@ -36,11 +36,12 @@ def _corrupt_image(image, corruption_name, severity, output_path):
         output_path (str): path to save the corrupted image
     """    
     img_arr = np.asarray(Image.open(image))
-    corrupted_img_arr = corrupt(img_arr, corruption_name=corruption_name, severity=severity)
-    corrupted_image = Image.fromarray(corrupted_img_arr)
-    makedirs(output_path, exist_ok=True)
-    out = path.join(output_path, "{}-{}.jpg".format(image.stem, corruption_name))
-    corrupted_image.save(out, "JPEG")
+    for severity in range(1, 6):
+        corrupted_img_arr = corrupt(img_arr, corruption_name=corruption_name, severity=severity)
+        corrupted_image = Image.fromarray(corrupted_img_arr)
+        makedirs(output_path+'/{}/{}'.format(corruption_name, str(severity)), exist_ok=True)
+        out = path.join(output_path, corruption_name, str(severity), "{}.jpg".format(image.stem))
+        corrupted_image.save(out, "JPEG")
     
 def corrupt_imagenet(imagenet_folder, output_folder):
     """this function iterates through every direcdtory in imagenet_folder and corrupts every image in it.
@@ -56,4 +57,4 @@ def corrupt_imagenet(imagenet_folder, output_folder):
             for img in subdir.iterdir():
                 if img.is_file():
                     for corruption in corruptions:
-                        _corrupt_image(img, corruption, 1, output_folder)
+                        _corrupt_image(img, corruption, output_folder)
