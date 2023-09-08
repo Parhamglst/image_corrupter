@@ -4,3 +4,4 @@ sub-imagenet-200.tar.gz
 best_model_res50_clean.pt
 imagenet_corrupted/
 __pycache__/
+imagenet_perturbed/
