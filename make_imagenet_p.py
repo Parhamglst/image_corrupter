@@ -28,13 +28,12 @@ class Imagenet_p:
 
     def perturb(self, perturbation):
         for index, folder in enumerate(sorted(os.listdir(self.input_folder_path))):
+            i=0
             for img_loc in os.listdir(self.input_folder_path + folder):
                 img = trn.Resize(256)(
                     PILImage.open(self.input_folder_path + folder + "/" + img_loc)
                 ).convert("RGB")
                 getattr(self, perturbation)(img, folder, img_loc)
-                break
-            break
                 
                 
     class MotionImage(WandImage):

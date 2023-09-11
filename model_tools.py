@@ -55,7 +55,6 @@ class Model_tools:
         error_rates = []
         for distortion_name in corruptions:
             rate = self.show_performance(
-                self.model,
                 distortion_name,
                 path_to_corrupted_dataset,
                 batch_size,
@@ -125,9 +124,8 @@ class Model_tools:
 
                 pred = output.argmax(dim=1)
                 correct += pred.eq(target.cuda()).sum()
-                print(correct)
 
-            errs.append(1 - 1.0 * correct / len(distorted_dataset))
+            errs.append(1 - 1.0 * correct.cpu() / len(distorted_dataset))
 
         print("\n=Average", tuple(errs))
         return np.mean(errs)
@@ -168,7 +166,7 @@ class Model_tools:
 
                 output = self.model(data)
 
-                for vid in output.view(num_vids, -1, 1000):
+                for vid in output.view(num_vids, -1, 200):
                     predictions.append(vid.argmax(1).to("cpu").numpy())
                     ranks.append(
                         [
@@ -179,7 +177,25 @@ class Model_tools:
 
         ranks = np.asarray(ranks)
 
-    def _flip_prob(self, predictions, severity, perturbation):
+        print("Computing Metrics\n")
+
+        print(
+            "Flipping Prob\t{:.5f}".format(
+                self._flip_prob(predictions, perturbation_name)
+            )
+        )
+        print(
+            "Top5 Distance\t{:.5f}".format(
+                self._ranking_dist(ranks, perturbation_name, mode="top5")
+            )
+        )
+        print(
+            "Zipf Distance\t{:.5f}".format(
+                self._ranking_dist(ranks, perturbation_name, mode="zipf")
+            )
+        )
+
+    def _flip_prob(self, predictions, perturbation, severity=1):
         noise_perturbation = True if "noise" in perturbation else False
         result = 0
         step_size = 1 if noise_perturbation else severity
@@ -199,7 +215,7 @@ class Model_tools:
 
         return result
 
-    def _ranking_dist(self, ranks, severity, perturbation):
+    def _ranking_dist(self, ranks, perturbation, severity=1, mode="top5"):
         noise_perturbation = True if "noise" in perturbation else False
         result = 0
         step_size = 1 if noise_perturbation else severity
@@ -213,7 +229,7 @@ class Model_tools:
 
                 for rank in vid_ranks[i::step_size][1:]:
                     perm2 = rank
-                    result_for_vid.append(self.dist(perm2[perm1_inv], mode))
+                    result_for_vid.append(self._dist(perm2[perm1_inv], mode))
                     if not noise_perturbation:
                         perm1 = perm2
                         perm1_inv = np.argsort(perm1)
@@ -223,8 +239,8 @@ class Model_tools:
         return result
 
     def _dist(self, sigma, mode="top5"):
-        identity = np.asarray(range(1, 1001))
-        cum_sum_top5 = np.cumsum(np.asarray([0] + [1] * 5 + [0] * (999 - 5)))
+        identity = np.asarray(range(1, 201))
+        cum_sum_top5 = np.cumsum(np.asarray([0] + [1] * 5 + [0] * (199 - 5)))
         recip = 1.0 / identity
         if mode == "top5":
             return np.sum(np.abs(cum_sum_top5[:5] - cum_sum_top5[sigma - 1][:5]))
